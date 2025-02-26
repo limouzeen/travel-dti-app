@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Box, Typography, Avatar, TextField, Button, Card, Stack, IconButton, InputAdornment } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Travel from './assets/travel.png';
@@ -29,12 +29,14 @@ function Register() {
   const [travellerPassword, setTravellerPassword] = useState('');
   const fileInputRef = useRef(null);
 
+
+  const navigator = useNavigate()
+
   // Handle file selection
-  const handleProfileUpload = (event) => {
+  const handleSelectFileClick = (event) => {
     const file = event.target.files[0];
     if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setTravellerImage(imageUrl);
+      setTravellerImage(file);  // ใช้ไฟล์จริงแทน URL
     }
   };
 
@@ -51,10 +53,44 @@ function Register() {
     }else if(travellerImage == null){
       alert('กรุณาอัพโหลดรูปโปรไฟล์');
     }else{
-      alert('ลงทะเบียนเรียบร้อยแล้ว');
+
+      const formData = new FormData();
+
+      formData.append('travellerFullname', travellerFullname);
+      formData.append('travellerEmail', travellerEmail);
+      formData.append('travellerPassword', travellerPassword);
+      
+      if(travellerImage){
+        formData.append('travellerImage', travellerImage);
+        console.log('Image : ',travellerImage);
+      }
+   
+      //ส่งข้อมูลให้ API http://localhost:3000/traveller แบบ post
+
+      try{
+
+        const response = await fetch('http://localhost:3000/traveller/', {
+          method: 'POST',
+          body: formData,
+          })
+
+          if(response.status == 201){
+            alert('ลงทะเบียนสำเร็จแล้ว')
+            navigator('/')
+            //window.location.href('/')
+          }else{
+            alert('ลงทะเบียนไม่สําเร็จ กรุณาลองใหม่อีกครั้ง')
+          }
+
+
+      }catch (err){
+
+        alert('เกิดข้อผิดพลาดในการลงทะเบียน', err);
+      }
+      
     }
 
-    console.log(travellFullname);
+    console.log(travellerFullname);
     console.log(travellerEmail);
     console.log(travellerPassword);
   }
@@ -149,7 +185,7 @@ function Register() {
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            onChange={handleProfileUpload}
+            onChange={handleSelectFileClick}
           />
         </Stack>
 
